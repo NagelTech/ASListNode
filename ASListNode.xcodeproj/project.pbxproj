@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		43CCD1A2CE48FD862EA55F52 /* libPods-ASListNode.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 224C922163EF51F11FC17675 /* libPods-ASListNode.a */; };
 		F0EB719B1BA3419E00F0EC55 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F0EB719A1BA3419E00F0EC55 /* main.m */; };
 		F0EB719E1BA3419E00F0EC55 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F0EB719D1BA3419E00F0EC55 /* AppDelegate.m */; };
 		F0EB71A11BA3419F00F0EC55 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F0EB71A01BA3419F00F0EC55 /* ViewController.m */; };
@@ -14,6 +15,8 @@
 		F0EB71A61BA3419F00F0EC55 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0EB71A51BA3419F00F0EC55 /* Images.xcassets */; };
 		F0EB71A91BA3419F00F0EC55 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = F0EB71A71BA3419F00F0EC55 /* LaunchScreen.xib */; };
 		F0EB71B51BA3419F00F0EC55 /* ASListNodeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F0EB71B41BA3419F00F0EC55 /* ASListNodeTests.m */; };
+		F0EB71C01BA342D400F0EC55 /* ASListNode.m in Sources */ = {isa = PBXBuildFile; fileRef = F0EB71BF1BA342D400F0EC55 /* ASListNode.m */; };
+		F0EB71C31BA343DC00F0EC55 /* ASListNodeScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = F0EB71C21BA343DC00F0EC55 /* ASListNodeScrollView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,6 +30,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A8B54955AF8511785068224 /* Pods-ASListNode.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ASListNode.debug.xcconfig"; path = "Pods/Target Support Files/Pods-ASListNode/Pods-ASListNode.debug.xcconfig"; sourceTree = "<group>"; };
+		224C922163EF51F11FC17675 /* libPods-ASListNode.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ASListNode.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D62EFEB66D146427DA65A04B /* Pods-ASListNode.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ASListNode.release.xcconfig"; path = "Pods/Target Support Files/Pods-ASListNode/Pods-ASListNode.release.xcconfig"; sourceTree = "<group>"; };
 		F0EB71951BA3419E00F0EC55 /* ASListNode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ASListNode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0EB71991BA3419E00F0EC55 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F0EB719A1BA3419E00F0EC55 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -40,6 +46,10 @@
 		F0EB71AE1BA3419F00F0EC55 /* ASListNodeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ASListNodeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0EB71B31BA3419F00F0EC55 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F0EB71B41BA3419F00F0EC55 /* ASListNodeTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ASListNodeTests.m; sourceTree = "<group>"; };
+		F0EB71BE1BA342D400F0EC55 /* ASListNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASListNode.h; sourceTree = "<group>"; };
+		F0EB71BF1BA342D400F0EC55 /* ASListNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASListNode.m; sourceTree = "<group>"; };
+		F0EB71C11BA343DC00F0EC55 /* ASListNodeScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASListNodeScrollView.h; sourceTree = "<group>"; };
+		F0EB71C21BA343DC00F0EC55 /* ASListNodeScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASListNodeScrollView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				43CCD1A2CE48FD862EA55F52 /* libPods-ASListNode.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -60,12 +71,31 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5BDF0A6AD34FC2204A3488A2 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				0A8B54955AF8511785068224 /* Pods-ASListNode.debug.xcconfig */,
+				D62EFEB66D146427DA65A04B /* Pods-ASListNode.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+		78452B942BA9C802B8857193 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				224C922163EF51F11FC17675 /* libPods-ASListNode.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F0EB718C1BA3419E00F0EC55 = {
 			isa = PBXGroup;
 			children = (
 				F0EB71971BA3419E00F0EC55 /* ASListNode */,
 				F0EB71B11BA3419F00F0EC55 /* ASListNodeTests */,
 				F0EB71961BA3419E00F0EC55 /* Products */,
+				5BDF0A6AD34FC2204A3488A2 /* Pods */,
+				78452B942BA9C802B8857193 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -89,6 +119,10 @@
 				F0EB71A51BA3419F00F0EC55 /* Images.xcassets */,
 				F0EB71A71BA3419F00F0EC55 /* LaunchScreen.xib */,
 				F0EB71981BA3419E00F0EC55 /* Supporting Files */,
+				F0EB71BE1BA342D400F0EC55 /* ASListNode.h */,
+				F0EB71BF1BA342D400F0EC55 /* ASListNode.m */,
+				F0EB71C11BA343DC00F0EC55 /* ASListNodeScrollView.h */,
+				F0EB71C21BA343DC00F0EC55 /* ASListNodeScrollView.m */,
 			);
 			path = ASListNode;
 			sourceTree = "<group>";
@@ -126,9 +160,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F0EB71B81BA3419F00F0EC55 /* Build configuration list for PBXNativeTarget "ASListNode" */;
 			buildPhases = (
+				0F112C33622E95549C5D9DA4 /* Check Pods Manifest.lock */,
 				F0EB71911BA3419E00F0EC55 /* Sources */,
 				F0EB71921BA3419E00F0EC55 /* Frameworks */,
 				F0EB71931BA3419E00F0EC55 /* Resources */,
+				0ADEF745DE1DB060624772A6 /* Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -214,12 +250,47 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		0ADEF745DE1DB060624772A6 /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-ASListNode/Pods-ASListNode-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		0F112C33622E95549C5D9DA4 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		F0EB71911BA3419E00F0EC55 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				F0EB71A11BA3419F00F0EC55 /* ViewController.m in Sources */,
+				F0EB71C01BA342D400F0EC55 /* ASListNode.m in Sources */,
+				F0EB71C31BA343DC00F0EC55 /* ASListNodeScrollView.m in Sources */,
 				F0EB719E1BA3419E00F0EC55 /* AppDelegate.m in Sources */,
 				F0EB719B1BA3419E00F0EC55 /* main.m in Sources */,
 			);
@@ -345,6 +416,7 @@
 		};
 		F0EB71B91BA3419F00F0EC55 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0A8B54955AF8511785068224 /* Pods-ASListNode.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = ASListNode/Info.plist;
@@ -355,6 +427,7 @@
 		};
 		F0EB71BA1BA3419F00F0EC55 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D62EFEB66D146427DA65A04B /* Pods-ASListNode.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = ASListNode/Info.plist;
@@ -416,6 +489,7 @@
 				F0EB71BA1BA3419F00F0EC55 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F0EB71BB1BA3419F00F0EC55 /* Build configuration list for PBXNativeTarget "ASListNodeTests" */ = {
 			isa = XCConfigurationList;
@@ -424,6 +498,7 @@
 				F0EB71BD1BA3419F00F0EC55 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
