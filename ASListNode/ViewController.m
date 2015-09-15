@@ -11,6 +11,9 @@
 #import "ASListNode.h"
 
 
+static const int NUM_ROWS = 200;
+
+
 @interface ViewController () <ASListNodeDataSource, ASListNodeDelegate>
 
 @end
@@ -22,6 +25,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.title = @"ASListNode Test";
+
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Top" style:UIBarButtonItemStylePlain target:self action:@selector(scrollToTop:)];
+
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Bottom" style:UIBarButtonItemStylePlain target:self action:@selector(scrollToBottom:)];
     // Do any additional setup after loading the view, typically from a nib.
 }
 
@@ -30,14 +38,17 @@
 
     if (!_listNode) {
         _listNode = [[ASListNode alloc] init];
-        _listNode.backgroundColor = [UIColor lightGrayColor];
-        _listNode.frame = (CGRect) { .size=self.view.bounds.size };
+        _listNode.backgroundColor = [UIColor whiteColor];
+        CGRect frame = CGRectMake(0, 44, self.view.bounds.size.width, self.view.bounds.size.height-44);
+        _listNode.frame = frame;
         _listNode.dataSource = self;
         _listNode.delegate = self;
 
         [self.view addSubview:_listNode.view];
 
-        [_listNode reloadData];
+        // start out in the middle...
+        
+        [_listNode scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:NUM_ROWS/2 inSection:0] atScrollPosition:ASListNodePositionMiddle animated:NO];
     }
 }
 
@@ -46,11 +57,24 @@
     // Dispose of any resources that can be recreated.
 }
 
+
+#pragma mark - IBActions
+
+
+- (IBAction)scrollToTop:(id)sender {
+    [_listNode scrollToTopAnimated:YES];
+}
+
+
+- (IBAction)scrollToBottom:(id)sender {
+    [_listNode scrollToEndAnimated:YES];
+}
+
 #pragma mark - ASListNodeDataSource
 
 
 - (NSUInteger)listNode:(ASListNode *)listNode numberOfItemsInSection:(NSUInteger)section {
-    return 100;
+    return NUM_ROWS;
 }
 
 - (ASCellNode *)listNode:(ASListNode *)listNode cellForItemAtIndexPath:(NSIndexPath *)indexPath {

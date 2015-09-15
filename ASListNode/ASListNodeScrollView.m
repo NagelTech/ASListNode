@@ -10,4 +10,13 @@
 
 @implementation ASListNodeScrollView
 
+@dynamic delegate;
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    [self.delegate listNodeScrollViewLayoutSubviews:self];
+}
+
+
 @end

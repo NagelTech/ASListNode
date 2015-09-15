@@ -8,6 +8,21 @@
 
 #import <UIKit/UIKit.h>
 
+
+@protocol ASListNodeScrollViewDelegate;
+
+
 @interface ASListNodeScrollView : UIScrollView
+
+@property(nonatomic,weak) id<UIScrollViewDelegate,ASListNodeScrollViewDelegate> delegate;
+
+@end
+
+
+@protocol ASListNodeScrollViewDelegate <NSObject>
+
+@required
+
+- (void)listNodeScrollViewLayoutSubviews:(ASListNodeScrollView *)scrollView;
 
 @end

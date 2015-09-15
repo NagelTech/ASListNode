@@ -9,6 +9,11 @@
 #import "ASDisplayNode.h"
 #import <ASCellNode.h>
 
+typedef NS_ENUM(NSInteger, ASListNodeScrollPosition) {
+    ASListNodePositionTop,
+    ASListNodePositionMiddle,
+    ASListNodePositionBottom,
+};
 
 @protocol ASListNodeDataSource;
 @protocol ASListNodeDelegate;
@@ -25,7 +30,10 @@
 - (NSUInteger)numberOfItemsInSection:(NSUInteger)section;
 - (ASCellNode *)cellForItemAtIndexPath:(NSIndexPath *)indexPath;
 
-- (void)reloadData;
+- (void)scrollToItemAtIndexPath:(NSIndexPath *)indexPath atScrollPosition:(ASListNodeScrollPosition)scrollPosition animated:(BOOL)animated;
+
+- (void)scrollToTopAnimated:(BOOL)animated;
+- (void)scrollToEndAnimated:(BOOL)animated;
 
 @end
 
