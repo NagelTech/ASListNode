@@ -15,6 +15,12 @@ typedef NS_ENUM(NSInteger, ASListNodeScrollPosition) {
     ASListNodePositionBottom,
 };
 
+
+typedef NSInteger ASListNodeIndex;
+
+extern const ASListNodeIndex ASListNodeIndexInvalid;
+
+
 @protocol ASListNodeDataSource;
 @protocol ASListNodeDelegate;
 
@@ -24,13 +30,13 @@ typedef NS_ENUM(NSInteger, ASListNodeScrollPosition) {
 @property (nonatomic, weak) id<ASListNodeDataSource> dataSource;
 @property (nonatomic, weak) id<ASListNodeDelegate> delegate;
 
+@property (nonatomic,copy) NSArray *items;
+
 - (instancetype)init;
 
-- (NSUInteger)numberOfSections;
-- (NSUInteger)numberOfItemsInSection:(NSUInteger)section;
-- (ASCellNode *)cellForItemAtIndexPath:(NSIndexPath *)indexPath;
+- (ASCellNode *)cellForItemAtIndex:(ASListNodeIndex)index;
 
-- (void)scrollToItemAtIndexPath:(NSIndexPath *)indexPath atScrollPosition:(ASListNodeScrollPosition)scrollPosition animated:(BOOL)animated;
+- (void)scrollToItemAtIndex:(ASListNodeIndex)index atScrollPosition:(ASListNodeScrollPosition)scrollPosition animated:(BOOL)animated;
 
 - (void)scrollToTopAnimated:(BOOL)animated;
 - (void)scrollToEndAnimated:(BOOL)animated;
@@ -42,13 +48,7 @@ typedef NS_ENUM(NSInteger, ASListNodeScrollPosition) {
 
 @required
 
-- (NSUInteger)listNode:(ASListNode *)listNode numberOfItemsInSection:(NSUInteger)section;
-
-- (ASCellNode *)listNode:(ASListNode *)listNode cellForItemAtIndexPath:(NSIndexPath *)indexPath;
-
-@optional
-
-- (NSUInteger)numberOfSectionsInListNode:(ASListNode *)listNode;
+- (ASCellNode *)listNode:(ASListNode *)listNode cellForItem:(id)item atIndex:(ASListNodeIndex)index;
 
 @end
 

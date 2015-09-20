@@ -16,6 +16,10 @@
 #import "ASListNodeScrollView.h"
 
 
+const ASListNodeIndex ASListNodeIndexInvalid = -1;
+
+
+
 @interface ASListNode () <UIScrollViewDelegate, ASListNodeScrollViewDelegate>
 
 @property (nonatomic,readonly) ASListNodeScrollView *view;
@@ -25,8 +29,9 @@
 
 @implementation ASListNode {
 
-    NSMutableDictionary *_cells;    // NSIndexPath -> ASCellNode
-    NSIndexPath *_topIndexPath;
+    NSMutableArray *_items;
+    NSMutableArray *_cells;         // always matches items
+    ASListNodeIndex _topIndex;
     NSMutableArray *_visibleCells;
     BOOL _virtualizedLeading;
     BOOL _virtualizedTrailing;
@@ -45,8 +50,9 @@
     }];
 
     if (self) {
-        _cells = [[NSMutableDictionary alloc] init];
-        _topIndexPath = nil;
+        _items = [[NSMutableArray alloc] init];
+        _cells = [[NSMutableArray alloc] init];
+        _topIndex = ASListNodeIndexInvalid;
         _visibleCells = [[NSMutableArray alloc] init];
         _virtualizedLeading = YES;
         _virtualizedTrailing = YES;
@@ -90,9 +96,29 @@
 
     [_visibleCells removeAllObjects];
 
-    _topIndexPath = nil;
+    _topIndex = ASListNodeIndexInvalid;
 
     [self setNeedsLayout];
+}
+
+
+- (NSArray *)items
+{
+    return [_items copy];
+}
+
+
+- (void)setItems:(NSArray *)items
+{
+    
+    // todo: can we maintain our top index when we do this?
+    
+    [_items removeAllObjects];
+    [_cells removeAllObjects];
+    [_visibleCells removeAllObjects];
+    _topIndex = 0;
+    
+    [_items addObjectsFromArray:items];
 }
 
 
@@ -105,7 +131,7 @@
 
     CGFloat contentOffset = self.view.contentOffset.y;
 
-    if ([self isFirstIndexPath:_topIndexPath]) {
+    if (_topIndex == 0) {
         contentOffset = -yPos;
         _virtualizedLeading = NO;
     } else {
@@ -133,11 +159,11 @@
     }
 }
 
-- (void)recalculateContentSizeWithBottomIndexPath:(NSIndexPath *)bottomIndexPath {
+- (void)recalculateContentSizeWithBottomIndex:(ASListNodeIndex)bottomIndex {
     ASCellNode *bottomCell = _visibleCells.lastObject;
     CGFloat contentHeight = CGRectGetMaxY(bottomCell.frame);
 
-    if ([self isLastIndexPath:bottomIndexPath]) {
+    if (bottomIndex == self.items.count-1) {
         _virtualizedTrailing = NO;
         NSLog(@"_virtualizedTrailing = NO");
     } else {
@@ -159,7 +185,7 @@
 #pragma mark - Scroll To
 
 
-- (void)scrollToItemAtIndexPath:(NSIndexPath *)indexPath atScrollPosition:(ASListNodeScrollPosition)scrollPosition animated:(BOOL)animated
+- (void)scrollToItemAtIndex:(ASListNodeIndex)index atScrollPosition:(ASListNodeScrollPosition)scrollPosition animated:(BOOL)animated
 {
     // todo: if the item is already visible we just need to scroll to that position...
     // todo: how do we animate scrolling and animating when virtualization is involved...
@@ -180,7 +206,7 @@
 
     CGFloat yPos = 0;
 
-    ASCellNode *cell = [self cellForItemAtIndexPath:indexPath];
+    ASCellNode *cell = [self cellForItemAtIndex:index];
     CGSize cellSize = [cell measure:constrainedSize];
 
     switch(scrollPosition) {
@@ -200,8 +226,8 @@
 
     // figure out virtualization, content offset and size...
 
-    _virtualizedLeading = ![self isFirstIndexPath:indexPath];
-    _virtualizedTrailing = ![self isLastIndexPath:indexPath];
+    _virtualizedLeading = !(index == 0);
+    _virtualizedTrailing = !(index == self.items.count-1);
 
     CGFloat contentOffset = (_virtualizedLeading) ? self.view.bounds.size.height * 2 : 0;
     CGFloat contentSize = contentOffset + self.view.bounds.size.height + ((_virtualizedTrailing) ? self.view.bounds.size.height * 2 : 0);
@@ -215,7 +241,7 @@
 
     [self.view addSubview:cell.view];
     [_visibleCells addObject:cell];
-    _topIndexPath = indexPath;
+    _topIndex = index;
 
     // Now schedule a layout which will end up calling [self layoutVisibleItems];
 
@@ -224,153 +250,36 @@
 
 - (void)scrollToTopAnimated:(BOOL)animated
 {
-    NSIndexPath *indexPath = [self nextIndexPath:nil];
-
-    if (!indexPath) {
-        return ;    // no data
-    }
-
-    [self scrollToItemAtIndexPath:indexPath atScrollPosition:ASListNodePositionTop animated:animated];
+    [self scrollToItemAtIndex:0 atScrollPosition:ASListNodePositionTop animated:animated];
 }
 
 - (void)scrollToEndAnimated:(BOOL)animated
 {
-    NSIndexPath *indexPath = [self prevIndexPath:nil];
-
-    if (!indexPath) {
-        return ;    // no data
-    }
-
-    [self scrollToItemAtIndexPath:indexPath atScrollPosition:ASListNodePositionBottom animated:animated];
-}
-
-
-#pragma mark - IndexPath helpers
-
-
-- (NSIndexPath *)prevIndexPath:(NSIndexPath *)indexPath
-{
-    NSUInteger section;
-    NSUInteger row;
-
-    if (!indexPath) {
-        section = [self numberOfSections];
-        row = 0;
-    } else {
-        section = indexPath.section;
-        row = indexPath.row;
-    }
-
-    while(row == 0) {
-        if (section == 0) {
-            return nil;
-        }
-
-        --section;
-        row = [self numberOfItemsInSection:section];
-    }
-
-    return [NSIndexPath indexPathForRow:row-1 inSection:section];
-}
-
-
-- (NSIndexPath *)prevIndexPath:(NSIndexPath *)indexPath count:(int)count
-{
-    while (count-- > 0) {
-        if (!(indexPath=[self prevIndexPath:indexPath])) {
-            break;
-        }
-    }
-
-    return indexPath;
-}
-
-
-- (BOOL)isFirstIndexPath:(NSIndexPath *)indexPath
-{
-    return indexPath && ![self prevIndexPath:indexPath];
-}
-
-- (NSIndexPath *)nextIndexPath:(NSIndexPath *)indexPath
-{
-    NSUInteger section = (indexPath) ? indexPath.section : 0;
-    NSInteger row = (indexPath) ? indexPath.row + 1 : 0;
-
-    NSUInteger numberOfSections = [self numberOfSections];
-
-    if (section >= numberOfSections) {
-        return nil; // we are passed the last valid section
-    }
-
-    NSUInteger numberOfItemsInSection = [self numberOfItemsInSection:section];
-
-    if ( row >= numberOfItemsInSection) {
-        ++section;
-        row = 0;
-
-        // skip empty sections...
-
-        while(section < numberOfSections) {
-            numberOfItemsInSection = [self numberOfItemsInSection:section];
-
-            if (numberOfItemsInSection > 0) {
-                break;
-            }
-
-            ++section;
-        }
-
-        if (section >= numberOfSections) {
-            return nil;
-        }
-    }
-
-    return [NSIndexPath indexPathForRow:row inSection:section];
-}
-
-- (NSIndexPath *)nextIndexPath:(NSIndexPath *)indexPath count:(int)count
-{
-    while (count-- > 0) {
-        if (!(indexPath=[self nextIndexPath:indexPath])) {
-            break;
-        }
-    }
-
-    return indexPath;
-}
-
-- (BOOL)isLastIndexPath:(NSIndexPath *)indexPath
-{
-    return indexPath && ![self nextIndexPath:indexPath];
+    [self scrollToItemAtIndex:self.items.count-1 atScrollPosition:ASListNodePositionBottom animated:animated];
 }
 
 
 #pragma mark - Data Access
 
 
-- (NSUInteger)numberOfSections
+- (ASCellNode *)cellForItemAtIndex:(ASListNodeIndex)index
 {
-    if ([self.dataSource respondsToSelector:@selector(numberOfSectionsInListNode:)]) {
-        return [self.dataSource numberOfSectionsInListNode:self];
-    } else {
-        return 1;
+    ASCellNode *cell = (index < _cells.count) ? _cells[index] : nil;
+    
+    if ((id)cell == [NSNull null]) {
+        cell = nil;
     }
-}
-
--(NSUInteger)numberOfItemsInSection:(NSUInteger)section
-{
-    return [self.dataSource listNode:self numberOfItemsInSection:section];
-}
-
-- (ASCellNode *)cellForItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    ASCellNode *cell = _cells[indexPath];
 
     if (!cell) {
-        cell = [self.dataSource listNode:self cellForItemAtIndexPath:indexPath];
-        if (cell) {
-            _cells[indexPath] = cell;
+        id item = _items[index];
+        cell = [self.dataSource listNode:self cellForItem:item atIndex:index];
+        ASDisplayNodeAssert(cell != nil, @"ASListNodeDataSource listNode:cellForItem:atIndex may not return nil");
+        
+        while(index > _cells.count) {
+            [_cells addObject:[NSNull null]];
         }
+        
+        _cells[index] = cell;
     }
 
     return cell;
@@ -382,19 +291,21 @@
 
 - (void)layoutVisibleCells
 {
-    NSIndexPath *bottomIndexPath = nil; // lazy initialized
     BOOL leadingChanged = NO;
     BOOL trailingChanged = NO;
-
-    // If we don't have a topIndexPath, set it to the first visible cell...
-
-    if (!_topIndexPath) {
-        _topIndexPath = [self nextIndexPath:nil];
-
-        if (!_topIndexPath) {
-            return ;    // no valid cells to layout
-        }
+    
+    if (_items.count == 0) {
+        // todo: maybe we need to remove any currently visible cells?
+        return ;    // no items to layout
     }
+
+    // If we don't have a topIndex, set it to the first cell...
+
+    if (_topIndex == ASListNodeIndexInvalid) {
+        _topIndex = 0;
+    }
+    
+    ASListNodeIndex bottomIndex = _topIndex + _visibleCells.count - 1;
 
     CGSize constrainedSize = (CGSize) {self.bounds.size.width, CGFLOAT_MAX};
     CGRect visibleArea = (CGRect) { .origin=self.view.contentOffset, .size=self.bounds.size };
@@ -409,12 +320,12 @@
             break;
         }
 
-        NSLog(@"removing leading cell at %@", _topIndexPath);
+        NSLog(@"removing leading cell at %zd", _topIndex);
 
         [_visibleCells removeObjectAtIndex:0];
         [cell.view removeFromSuperview];
 
-        _topIndexPath = [self nextIndexPath:_topIndexPath];
+        ++_topIndex;
 
         leadingChanged = YES;
     }
@@ -428,16 +339,11 @@
             break;
         }
 
-        if (!bottomIndexPath) { // only initialize this if it looks like we need it
-            bottomIndexPath = [self nextIndexPath:_topIndexPath count:(int)_visibleCells.count - 1];
-        }
-
-
-        NSLog(@"removing trailing cell at %@", bottomIndexPath);
+        NSLog(@"removing trailing cell at %zd", bottomIndex);
 
         [_visibleCells removeLastObject];
         [cell.view removeFromSuperview];
-        bottomIndexPath = [self prevIndexPath:bottomIndexPath];
+        --bottomIndex;
 
         trailingChanged = YES;
     }
@@ -446,23 +352,17 @@
 
     ASCellNode *topCell = _visibleCells.firstObject;
 
-    while(topCell && topCell.frame.origin.y > visibleArea.origin.y) {
-        NSIndexPath *indexPath = [self prevIndexPath:_topIndexPath];
+    while(topCell && topCell.frame.origin.y > visibleArea.origin.y && _topIndex > 0) {
+        --_topIndex;
 
-        if (!indexPath) {
-            break;
-        }
+        NSLog(@"adding leading cell at %zd", +_topIndex);
 
-        NSLog(@"adding leading cell at %@", indexPath);
-
-        ASCellNode *cell = [self cellForItemAtIndexPath:indexPath];
+        ASCellNode *cell = [self cellForItemAtIndex:_topIndex];
         CGSize cellSize = [cell measure:constrainedSize];
 
         cell.frame = (CGRect) {.origin={0,topCell.frame.origin.y-cellSize.height}, .size=cellSize};
         [self.view addSubview:cell.view];
         [_visibleCells insertObject:cell atIndex:0];
-
-        _topIndexPath = indexPath;
 
         topCell = cell;
 
@@ -474,22 +374,18 @@
     ASCellNode *bottomCell = _visibleCells.lastObject;
     CGFloat visibileMaxY = CGRectGetMaxY(visibleArea);
 
-    while(!bottomCell || CGRectGetMaxY(bottomCell.frame) < visibileMaxY) {
+    while((bottomIndex < (ASListNodeIndex)_items.count-1) && (!bottomCell || CGRectGetMaxY(bottomCell.frame) < visibileMaxY)) {
 
-        if (!bottomIndexPath) { // only initialize this if it looks like we need it
-            bottomIndexPath = [self nextIndexPath:_topIndexPath count:(int)_visibleCells.count - 1];
-        }
-
-        NSIndexPath *indexPath = (bottomCell) ? [self nextIndexPath:bottomIndexPath] : bottomIndexPath;
+        ASListNodeIndex index = bottomIndex+1;
         CGFloat yPos = (bottomCell) ? CGRectGetMaxY(bottomCell.frame) : visibleArea.origin.y;
 
-        if (!indexPath) {
+        if (index < 0) {
             break;
         }
 
-        NSLog(@"adding trailing cell at %@", indexPath);
+        NSLog(@"adding trailing cell at %zd", index);
 
-        ASCellNode *cell = [self cellForItemAtIndexPath:indexPath];
+        ASCellNode *cell = [self cellForItemAtIndex:index];
         CGSize cellSize = [cell measure:constrainedSize];
 
         cell.frame = (CGRect) {.origin={0,yPos}, .size=cellSize};
@@ -497,7 +393,7 @@
         [_visibleCells addObject:cell];
 
         bottomCell = cell;
-        bottomIndexPath = indexPath;
+        bottomIndex = index;
 
         trailingChanged = YES;
     }
@@ -505,7 +401,7 @@
     // adjust the content size if needed...
 
     if (trailingChanged && _virtualizedTrailing) {
-        [self recalculateContentSizeWithBottomIndexPath:bottomIndexPath];
+        [self recalculateContentSizeWithBottomIndex:bottomIndex];
     }
 
     if (leadingChanged && _virtualizedLeading) {
@@ -521,9 +417,7 @@
 
 - (void)listNodeScrollViewLayoutSubviews:(ASListNodeScrollView *)scrollView
 {
-    if (self.dataSource) {
-        [self layoutVisibleCells];
-    }
+    [self layoutVisibleCells];
 }
 
 #pragma mark - UIScrollViewDelegate

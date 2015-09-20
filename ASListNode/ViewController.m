@@ -43,12 +43,20 @@ static const int NUM_ROWS = 200;
         _listNode.frame = frame;
         _listNode.dataSource = self;
         _listNode.delegate = self;
+        
+        NSMutableArray *items = [[NSMutableArray alloc] init];
+        
+        for(int index=0; index<NUM_ROWS; index++) {
+            [items addObject:[NSString stringWithFormat:@"Row #%d", index]];
+        }
+        
+        _listNode.items = items;
 
         [self.view addSubview:_listNode.view];
 
         // start out in the middle...
         
-        [_listNode scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:NUM_ROWS/2 inSection:0] atScrollPosition:ASListNodePositionMiddle animated:NO];
+        [_listNode scrollToItemAtIndex:NUM_ROWS/2 atScrollPosition:ASListNodePositionMiddle animated:NO];
     }
 }
 
@@ -73,15 +81,11 @@ static const int NUM_ROWS = 200;
 #pragma mark - ASListNodeDataSource
 
 
-- (NSUInteger)listNode:(ASListNode *)listNode numberOfItemsInSection:(NSUInteger)section {
-    return NUM_ROWS;
-}
-
-- (ASCellNode *)listNode:(ASListNode *)listNode cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+- (ASCellNode *)listNode:(ASListNode *)listNode cellForItem:(NSString *)item atIndex:(ASListNodeIndex)index {
     ASTextCellNode *cellNode = [[ASTextCellNode alloc] init];
-
-    cellNode.text = [NSString stringWithFormat:@"Row #%zd", indexPath.row];
-
+    
+    cellNode.text = item;
+    
     return cellNode;
 }
 
