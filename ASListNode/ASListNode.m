@@ -116,6 +116,7 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     BOOL _virtualizedLeading;
     BOOL _virtualizedTrailing;
     dispatch_queue_t _batchQueue;
+    UIEdgeInsets _contentInset;
 }
 
 
@@ -127,6 +128,8 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     self = [super initWithViewBlock:^UIView *{
         ASListNodeScrollView *scrollView = [[ASListNodeScrollView alloc] init];
         scrollView.delegate = self;
+        scrollView.contentInset = _contentInset;
+        scrollView.scrollIndicatorInsets = _contentInset;
         return scrollView;
     }];
 
@@ -201,6 +204,20 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     _topIndex = 0;
     
     [_items addObjectsFromArray:items];
+}
+
+
+- (void)setContentInset:(UIEdgeInsets)contentInset {
+    if ( self.nodeLoaded) {
+        self.view.contentInset = contentInset;
+    } else {
+        _contentInset = contentInset;
+    }
+}
+
+
+- (UIEdgeInsets)contentInset {
+    return (self.nodeLoaded) ? self.view.contentInset : _contentInset;
 }
 
 
@@ -282,9 +299,12 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
 
     [_visibleCells removeAllObjects];
 
+    CGSize size = (CGSize) {self.bounds.size.width, self.bounds.size.height};
+    CGSize effectiveSize = (CGSize) {size.width - (self.contentInset.left + self.contentInset.right), size.height - (self.contentInset.top + self.contentInset.bottom)};
+
     // Find position on the screen we want...
 
-    CGSize constrainedSize = (CGSize) {self.bounds.size.width, CGFLOAT_MAX};
+    CGSize constrainedSize = (CGSize) {size.width, CGFLOAT_MAX};
 
     CGFloat yPos = 0;
 
@@ -298,11 +318,11 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
             break;
 
         case ASListNodePositionMiddle:
-            yPos = (self.view.bounds.size.height - cellSize.height) / 2;    // todo: pixel align
+            yPos = (effectiveSize.height - cellSize.height) / 2;    // todo: pixel align
             break;
 
         case ASListNodePositionBottom:
-            yPos = self.view.bounds.size.height - cellSize.height;
+            yPos = effectiveSize.height - cellSize.height;
             break;
     }
 
@@ -311,11 +331,11 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     _virtualizedLeading = !(index == 0);
     _virtualizedTrailing = !(index == self.items.count-1);
 
-    CGFloat contentOffset = (_virtualizedLeading) ? self.view.bounds.size.height * 2 : 0;
-    CGFloat contentSize = contentOffset + self.view.bounds.size.height + ((_virtualizedTrailing) ? self.view.bounds.size.height * 2 : 0);
+    CGFloat contentOffset = (_virtualizedLeading) ? size.height * 2 : 0;
+    CGFloat contentSize = contentOffset + effectiveSize.height + ((_virtualizedTrailing) ? size.height * 2 : 0);
 
-    self.view.contentOffset = (CGPoint){0,contentOffset};
-    self.view.contentSize = (CGSize){self.view.bounds.size.width, contentSize};
+    self.view.contentOffset = (CGPoint){0,contentOffset - self.contentInset.top};
+    self.view.contentSize = (CGSize){size.width, contentSize};
 
     // Add the anchor cell...
 

@@ -39,7 +39,7 @@ static const int NUM_ROWS = 200;
     if (!_listNode) {
         _listNode = [[ASListNode alloc] init];
         _listNode.backgroundColor = [UIColor whiteColor];
-        CGRect frame = CGRectMake(0, 44, self.view.bounds.size.width, self.view.bounds.size.height-44);
+        CGRect frame = CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height);
         _listNode.frame = frame;
         _listNode.dataSource = self;
         _listNode.delegate = self;
@@ -51,6 +51,8 @@ static const int NUM_ROWS = 200;
         }
         
         _listNode.items = items;
+
+        _listNode.contentInset = (UIEdgeInsets) {.top = 64};
 
         [self.view addSubview:_listNode.view];
 

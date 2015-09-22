@@ -64,8 +64,8 @@ typedef NS_ENUM(NSInteger, ASListNodeOperationType) {
 
 @property (nonatomic, weak) id<ASListNodeDataSource> dataSource;
 @property (nonatomic, weak) id<ASListNodeDelegate> delegate;
-
 @property (nonatomic,copy,nonnull) NSArray *items;
+@property (nonatomic) UIEdgeInsets contentInset;
 
 - (nonnull instancetype)init;
 
