@@ -19,6 +19,86 @@
 const ASListNodeIndex ASListNodeIndexInvalid = -1;
 
 
+@implementation ASListNodeOperation
+
+- (instancetype)initWithType:(ASListNodeOperationType)type sourceIndex:(ASListNodeIndex)sourceIndex destIndex:(ASListNodeIndex)destIndex count:(NSInteger)count items:(NSArray *)items
+{
+    if ((self=[super init])) {
+        _type = type;
+        _sourceIndex = sourceIndex;
+        _destIndex = destIndex;
+        _count = count;
+        _items = items;
+    }
+    
+    return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    return [[self.class allocWithZone:zone] initWithType:_type sourceIndex:_sourceIndex destIndex:_destIndex count:_count items:_items];
+}
+
++ (instancetype)insertAtIndex:(ASListNodeIndex)destIndex items:(NSArray *)items {
+    return [[self alloc] initWithType:ASListNodeOperationTypeInsert sourceIndex:ASListNodeIndexInvalid destIndex:destIndex count:0 items:items];
+}
+
++ (instancetype)deleteFromIndex:(ASListNodeIndex)sourceIndex count:(NSInteger)count {
+    return [[self alloc] initWithType:ASListNodeOperationTypeDelete sourceIndex:sourceIndex destIndex:ASListNodeIndexInvalid count:count items:nil];
+}
+
+@end
+
+
+@implementation ASListNodeBatch {
+    NSMutableArray<ASListNodeOperation *> *_operations;
+}
+
+- (instancetype)init {
+    if ((self=[super init])) {
+        _operations = [[NSMutableArray alloc] init];
+    }
+    
+    return self;
+}
+
+- (void)addOperation:(ASListNodeOperation *)operation
+{
+    [_operations addObject:operation];
+}
+
+- (void)insertAtIndex:(ASListNodeIndex)destIndex items:(NSArray *)items {
+    [self addOperation:[ASListNodeOperation insertAtIndex:destIndex items:items]];
+}
+
+- (void)deleteFromIndex:(ASListNodeIndex)sourceIndex count:(NSInteger)count {
+    [self addOperation:[ASListNodeOperation deleteFromIndex:sourceIndex count:count]];
+}
+
+@end
+
+
+@interface ASListNodeBatchInternal : NSObject
+
+@property (nonatomic,readonly) NSArray<ASListNodeOperation *> *operations;
+
+- (instancetype)initWithBatch:(ASListNodeBatch *)batch;
+
+@end
+
+
+@implementation ASListNodeBatchInternal
+
+- (instancetype)initWithBatch:(ASListNodeBatch *)batch
+{
+    if ((self=[super init])) {
+        _operations = batch.operations;
+    }
+    
+    return self;
+}
+
+@end
+
 
 @interface ASListNode () <UIScrollViewDelegate, ASListNodeScrollViewDelegate>
 
@@ -35,6 +115,7 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     NSMutableArray *_visibleCells;
     BOOL _virtualizedLeading;
     BOOL _virtualizedTrailing;
+    dispatch_queue_t _batchQueue;
 }
 
 
@@ -56,6 +137,7 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
         _visibleCells = [[NSMutableArray alloc] init];
         _virtualizedLeading = YES;
         _virtualizedTrailing = YES;
+        _batchQueue = dispatch_queue_create("ASListNodeBatch", DISPATCH_QUEUE_SERIAL);
     }
 
     return self;
@@ -407,6 +489,110 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     if (leadingChanged && _virtualizedLeading) {
         [self adjustContentOffset];
     }
+}
+
+
+#pragma mark - Batch support
+
+
+- (void)executeInsertOperation:(ASListNodeOperation *)operation
+{
+   // First, make the updates on our underlying data structures...
+    
+    [operation.items enumerateObjectsUsingBlock:^(id  _Nonnull item, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSUInteger index = (NSUInteger)operation.destIndex + idx;
+        
+        [_items insertObject:item atIndex:index];
+        [_cells insertObject:[NSNull null] atIndex:index];
+    }];
+    
+    // todo: will this work when inserting at the start or end?
+    // todo: what if the list fits on the screen?
+    
+    ASListNodeIndex firstIndex = operation.destIndex;
+    NSInteger count = operation.items.count;
+    
+    if ( firstIndex <= _topIndex ) {  // we started before the current top of the visible area
+        NSLog(@"inserting cells before visibleCells");
+        if (!_virtualizedLeading) {
+            _virtualizedLeading = YES;
+            NSLog(@"virtualizing leading");
+        }
+        _topIndex += count;
+    } else if (firstIndex > _topIndex + _visibleCells.count - 1) {  // we are inserting after the visible area
+        NSLog(@"inserting cells after visibleCells");
+        if (!_virtualizedTrailing) {
+            _virtualizedTrailing = YES;
+            NSLog(@"virtualizing trailing");
+        }
+    } else {    // we are insertig in the visible area
+        
+        NSLog(@"inserting into visibleCells");
+        
+        // todo: well, lots of work needs to be done here.
+        // shift cells down, actually insert the new ones here
+        // animate the whole process
+
+        // remove all visible items after the firstIndex, so we will rebuild them...
+        
+        while (_visibleCells.count > firstIndex-_topIndex) {
+            ASDisplayNode *cell = _visibleCells.lastObject;
+            
+            [cell.view removeFromSuperview];
+            [_visibleCells removeLastObject];
+        }
+        
+        if (!_virtualizedTrailing) {
+            _virtualizedTrailing = YES;
+            NSLog(@"virtualizing trailing");
+        }
+        
+        [self layoutVisibleCells];
+    }
+}
+
+
+- (void)performBatch:(ASListNodeBatch *)batch async:(BOOL)async completion:(void (^)())completion
+{
+    ASListNodeBatchInternal *b = [[ASListNodeBatchInternal alloc] initWithBatch:batch];
+    
+    // Right now we only support the main thread...
+    
+    for(ASListNodeOperation *operation in b.operations) {
+        
+        switch(operation.type) {
+            case ASListNodeOperationTypeInsert:
+                [self executeInsertOperation:operation];
+                break;
+                
+            case ASListNodeOperationTypeDelete:
+                break;
+                
+            case ASListNodeOperationTypeMove:
+                break;
+                
+            case ASListNodeOperationTypeReplace:
+                break;
+        }
+    }
+    
+    
+}
+
+
+-(void)performBatch:(ASListNodeBatch *)batch
+{
+    [self performBatch:batch async:NO completion:nil];
+}
+
+
+- (void)performBatchBlock:(void (^)(ASListNodeBatch *))batchBlock
+{
+    ASListNodeBatch *batch = [[ASListNodeBatch alloc] init];
+    
+    batchBlock(batch);
+    
+    [self performBatch:batch async:NO completion:nil];
 }
 
 

@@ -70,7 +70,14 @@ static const int NUM_ROWS = 200;
 
 
 - (IBAction)scrollToTop:(id)sender {
-    [_listNode scrollToTopAnimated:YES];
+//    [_listNode scrollToTopAnimated:YES];
+    
+
+    NSString *item = [NSString stringWithFormat:@"NEW ITEM %zd", _listNode.items.count + 1];
+    
+    [_listNode performBatchBlock:^(ASListNodeBatch * _Nonnull batch) {
+        [batch insertAtIndex:100 items:@[item]];
+    }];
 }
 
 
