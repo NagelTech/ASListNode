@@ -57,8 +57,10 @@ static const int NUM_ROWS = 200;
         [self.view addSubview:_listNode.view];
 
         // start out in the middle...
-        
-        [_listNode scrollToItemAtIndex:NUM_ROWS/2 atScrollPosition:ASListNodePositionMiddle animated:NO];
+
+        if (NUM_ROWS > 0) {
+            [_listNode scrollToItemAtIndex:NUM_ROWS/2 atScrollPosition:ASListNodePositionMiddle animated:NO];
+        }
     }
 }
 
@@ -70,16 +72,34 @@ static const int NUM_ROWS = 200;
 
 #pragma mark - IBActions
 
+static int sNewItemIndex = 0;
 
 - (IBAction)scrollToTop:(id)sender {
 //    [_listNode scrollToTopAnimated:YES];
-    
 
-    NSString *item = [NSString stringWithFormat:@"NEW ITEM %zd", _listNode.items.count + 1];
-    
+    NSString *item = [NSString stringWithFormat:@"NEW ITEM %zd", sNewItemIndex];
+
+    ASListNodeIndex index = 0;
+
+    switch(1) {
+        case 0:
+            index = 0;
+            break;
+
+        case 1:
+            index = _listNode.items.count/2;
+            break;
+
+        case 2:
+            index = _listNode.items.count;
+            break;
+    }
+
     [_listNode performBatchBlock:^(ASListNodeBatch * _Nonnull batch) {
-        [batch insertAtIndex:100 items:@[item]];
+        [batch insertAtIndex:index items:@[item]];
     }];
+
+    ++sNewItemIndex;
 }
 
 

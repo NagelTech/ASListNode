@@ -130,6 +130,7 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
         scrollView.delegate = self;
         scrollView.contentInset = _contentInset;
         scrollView.scrollIndicatorInsets = _contentInset;
+        scrollView.alwaysBounceVertical = YES;  // fixed for now
         return scrollView;
     }];
 
@@ -201,7 +202,7 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     [_items removeAllObjects];
     [_cells removeAllObjects];
     [_visibleCells removeAllObjects];
-    _topIndex = 0;
+    _topIndex = ASListNodeIndexInvalid;
     
     [_items addObjectsFromArray:items];
 }
@@ -258,7 +259,8 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     }
 }
 
-- (void)recalculateContentSizeWithBottomIndex:(ASListNodeIndex)bottomIndex {
+- (void)recalculateContentSize {
+    ASListNodeIndex bottomIndex = _topIndex + _visibleCells.count - 1;
     ASCellNode *bottomCell = _visibleCells.lastObject;
     CGFloat contentHeight = CGRectGetMaxY(bottomCell.frame);
 
@@ -476,10 +478,14 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     ASCellNode *bottomCell = _visibleCells.lastObject;
     CGFloat visibileMaxY = CGRectGetMaxY(visibleArea);
 
+    if (!bottomCell) {
+        leadingChanged = YES;
+    }
+
     while((bottomIndex < (ASListNodeIndex)_items.count-1) && (!bottomCell || CGRectGetMaxY(bottomCell.frame) < visibileMaxY)) {
 
         ASListNodeIndex index = bottomIndex+1;
-        CGFloat yPos = (bottomCell) ? CGRectGetMaxY(bottomCell.frame) : visibleArea.origin.y;
+        CGFloat yPos = (bottomCell) ? CGRectGetMaxY(bottomCell.frame) : 0;
 
         if (index < 0) {
             break;
@@ -503,7 +509,7 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     // adjust the content size if needed...
 
     if (trailingChanged && _virtualizedTrailing) {
-        [self recalculateContentSizeWithBottomIndex:bottomIndex];
+        [self recalculateContentSize];
     }
 
     if (leadingChanged && _virtualizedLeading) {
@@ -523,7 +529,9 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
         NSUInteger index = (NSUInteger)operation.destIndex + idx;
         
         [_items insertObject:item atIndex:index];
-        [_cells insertObject:[NSNull null] atIndex:index];
+        if (_cells.count >= index) {
+            [_cells insertObject:[NSNull null] atIndex:index];
+        }
     }];
     
     // todo: will this work when inserting at the start or end?
@@ -531,19 +539,29 @@ const ASListNodeIndex ASListNodeIndexInvalid = -1;
     
     ASListNodeIndex firstIndex = operation.destIndex;
     NSInteger count = operation.items.count;
-    
-    if ( firstIndex <= _topIndex ) {  // we started before the current top of the visible area
+
+    if ( count == _items.count) {
+        // we are inserting, starting from empty
+        [self layoutVisibleCells];
+    } else if ( firstIndex <= _topIndex ) {  // we started before the current top of the visible area
         NSLog(@"inserting cells before visibleCells");
+        _topIndex += count;
         if (!_virtualizedLeading) {
             _virtualizedLeading = YES;
             NSLog(@"virtualizing leading");
+            [self adjustContentOffset];
         }
-        _topIndex += count;
     } else if (firstIndex > _topIndex + _visibleCells.count - 1) {  // we are inserting after the visible area
         NSLog(@"inserting cells after visibleCells");
         if (!_virtualizedTrailing) {
             _virtualizedTrailing = YES;
             NSLog(@"virtualizing trailing");
+            [self recalculateContentSize];
+
+            if (_topIndex + _visibleCells.count <= _items.count) {
+                // last cell is visible, we need to layout possibly newly visible cells
+                [self layoutVisibleCells];
+            }
         }
     } else {    // we are insertig in the visible area
         
